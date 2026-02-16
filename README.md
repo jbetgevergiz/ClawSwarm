@@ -1,6 +1,6 @@
 # ClawSwarm
 
-**Enterprise multi-channel AI agent platform.** One Swarms-based agent, one API—unified messaging across Telegram, Discord, and WhatsApp with optional Claude-powered reasoning. Built for production: gRPC gateway, configurable prompts, and 24/7 operation.
+**Enterprise multi-channel AI agent platform.** One Swarms-based agent, one API—unified messaging across Telegram, Discord, and WhatsApp with optional Claude-powered reasoning. Built for production: gRPC gateway, prompts in code (`claw_swarm.prompts`), and 24/7 operation. Dockerfile included (Python 3.12).
 
 ---
 
@@ -47,6 +47,7 @@ ClawSwarm delivers a single AI agent that responds to users on Telegram, Discord
 ## Requirements
 
 - Python 3.10+
+- Dependencies listed in `requirements.txt` (no version pins; use a venv and pin locally if needed)
 - [Swarms](https://github.com/kyegomez/swarms) and [Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) (for the Claude tool)
 - Platform credentials for the channels you enable: Telegram Bot Token, Discord Bot Token and Channel IDs, and/or WhatsApp Cloud API credentials
 
@@ -59,8 +60,6 @@ git clone https://github.com/YOUR_ORG/ClawSwarm.git
 cd ClawSwarm
 pip install -r requirements.txt
 ```
-
-Editable install: `pip install -e .`
 
 ---
 
@@ -82,6 +81,15 @@ python -m claw_swarm.main       # terminal 2
 ```
 
 Use Ctrl+C to stop; `run.sh` stops both processes. For 24/7 operation, run under systemd or Docker.
+
+**Docker:**
+
+```bash
+docker build -t clawswarm .
+docker run --env-file .env clawswarm
+```
+
+Pass channel tokens and `AGENT_MODEL` via `--env-file .env` or `-e`.
 
 ---
 

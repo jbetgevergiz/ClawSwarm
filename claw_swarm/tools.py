@@ -14,7 +14,12 @@ from claude_agent_sdk import (
     TextBlock,
 )
 
-TOOLS_PRESET_CLAUDE_CODE: dict[str, Any] = {"type": "preset", "preset": "claude_code"}
+from claw_swarm.prompts import build_agent_system_prompt
+
+TOOLS_PRESET_CLAUDE_CODE: dict[str, Any] = {
+    "type": "preset",
+    "preset": "claude_code",
+}
 
 
 async def run_claude_agent_async(
@@ -58,7 +63,7 @@ async def stream_claude_agent(
         prompt: System prompt (agent instructions).
         tasks: The user's input / task to execute (sent to the agent).
     """
-    combined_system = _build_system_prompt(
+    combined_system = build_agent_system_prompt(
         name=name, description=description, system_prompt=prompt
     )
 
@@ -73,17 +78,6 @@ async def stream_claude_agent(
             for block in message.content:
                 if isinstance(block, TextBlock) and block.text:
                     yield block.text.strip()
-
-
-def _build_system_prompt(name: str, description: str, system_prompt: str) -> str:
-    """Combine name, description, and system prompt into one system message."""
-    parts = [
-        f"You are operating as the agent named: {name}.",
-        f"Description of your role: {description}.",
-        "",
-        system_prompt.strip(),
-    ]
-    return "\n".join(parts).strip()
 
 
 def run_claude_agent(

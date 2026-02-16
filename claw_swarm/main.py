@@ -17,7 +17,10 @@ Env:
   TELEGRAM_BOT_TOKEN, DISCORD_BOT_TOKEN, WHATSAPP_* - for sending replies
 """
 
+from dotenv import load_dotenv
 from claw_swarm.agent_runner import main
+
+load_dotenv()
 
 if __name__ == "__main__":
     raise SystemExit(main())

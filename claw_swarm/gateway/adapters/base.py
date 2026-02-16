@@ -5,6 +5,7 @@ Each platform (Telegram, Discord, WhatsApp) implements this and returns UnifiedM
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -49,6 +50,4 @@ class MessageAdapter(ABC):
                 if msg.timestamp_utc_ms > since_ms:
                     since_ms = msg.timestamp_utc_ms
             if not batch:
-                import asyncio
-
                 await asyncio.sleep(5)

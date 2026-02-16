@@ -13,11 +13,17 @@ ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **n
 **Key capabilities**
 
 - **Lighter than OpenClaw** — Smaller footprint and simpler stack; same multi-channel vision without the full OpenClaw surface area.
+
 - **Natively multi-agent** — Designed from the ground up for multi-agent orchestration on the Swarms framework and Swarms ecosystem.
+
 - **Unified ingestion** — One gRPC API for all supported channels; add or remove platforms without changing agent logic.
+
 - **Swarms-native agent** — Industry-standard orchestration, configurable model and system prompt, Claude available as a tool for deep reasoning and code.
+
 - **Compiles to Rust** — Build path to Rust for performance and deployment flexibility.
+
 - **Prompts in code** — Agent and Claude-tool prompts are Python strings in `claw_swarm.prompts`; override via `create_agent(system_prompt=...)` or edit the module.
+
 - **Production-ready** — Optional TLS, environment-based configuration, long-running agent loop suitable for systemd, Docker, or managed runtimes.
 
 ---
@@ -65,16 +71,43 @@ ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **n
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_ORG/ClawSwarm.git
-cd ClawSwarm
-pip install -r requirements.txt
+pip3 install -U claw-swarm
 ```
+
+---
+
+## Environment variables
+
+Set these in your shell or in a `.env` file (e.g. `--env-file .env` with Docker). Omit a platform’s credentials to disable that channel.
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| **Gateway** | | |
+| `GATEWAY_HOST` | Bind address (gateway) or gateway host (agent) | `[::]` (server), `localhost` (agent) |
+| `GATEWAY_PORT` | gRPC port | `50051` |
+| `GATEWAY_TLS` | Enable TLS: `1`, `true`, or `yes` | — |
+| `GATEWAY_TLS_CERT_FILE` | Path to TLS certificate file | — |
+| `GATEWAY_TLS_KEY_FILE` | Path to TLS private key file | — |
+| **Channels** | | |
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot API token | — |
+| `DISCORD_BOT_TOKEN` | Discord bot token | — |
+| `DISCORD_CHANNEL_IDS` | Comma-separated Discord channel IDs | — |
+| `WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API access token | — |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Cloud API phone number ID | — |
+| `WHATSAPP_QUEUE_PATH` | Optional WhatsApp queue path | — |
+| **Agent** | | |
+| `AGENT_MODEL` | Swarms agent model | `gpt-4o-mini` |
+| `OPENAI_API_KEY` | OpenAI API key (for agent model) | — |
+| `ANTHROPIC_API_KEY` | Anthropic API key (for Claude tool) | — |
+| **Memory** | | |
+| `AGENT_MEMORY_FILE` | Agent memory markdown filename (project root) | `agent_memory.md` |
+| `AGENT_MEMORY_MAX_CHARS` | Max characters of memory to load into context | `100000` |
 
 ---
 
 ## Quick Start
 
-**1. Set environment variables** for the channels you use (e.g. `TELEGRAM_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `DISCORD_CHANNEL_IDS`).
+**1. Set environment variables** for the channels you use (see **Environment variables** above for the full table).
 
 **2. Run the full stack** (gateway + agent in one process group):
 
@@ -104,63 +137,8 @@ Pass channel tokens and `AGENT_MODEL` via `--env-file .env` or `-e`.
 
 ## Configuration
 
-### Gateway
+See the **Environment variables** table above for the full list. The gateway and agent both read `GATEWAY_HOST` and `GATEWAY_PORT` (gateway binds on that address; agent connects to it). Replies use the same platform tokens as the gateway.
 
-| Variable | Purpose |
-|----------|---------|
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot API token |
-| `DISCORD_BOT_TOKEN` | Discord bot token |
-| `DISCORD_CHANNEL_IDS` | Comma-separated channel IDs |
-| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Cloud API |
-| `GATEWAY_HOST`, `GATEWAY_PORT` | Bind address (default `[::]:50051`) |
-| `GATEWAY_TLS`, `GATEWAY_TLS_CERT_FILE`, `GATEWAY_TLS_KEY_FILE` | TLS for production |
-
-Omit a platform’s credentials to disable that channel.
-
-### Agent
-
-| Variable | Purpose |
-|----------|---------|
-| `GATEWAY_HOST`, `GATEWAY_PORT` | Gateway endpoint (default `localhost:50051`) |
-| `AGENT_MODEL` | Swarms agent model (default `gpt-4o-mini`) |
-
-Replies use the same platform tokens as the gateway.
-
----
-
-## Agent and Prompts
-
-The main agent is a **Swarms Agent** with system prompt and Claude-tool prompt defined in `claw_swarm.prompts`. Override with `create_agent(system_prompt=...)` or edit the strings in that module.
-
-**Programmatic use:**
-
-```python
-from claw_swarm import create_agent
-
-agent = create_agent()
-response = agent.run("What are the key benefits of multi-agent systems?")
-```
-
-Override model or prompt via arguments or environment (`AGENT_MODEL`).
-
----
-
-## Claude Utilities (library)
-
-For one-off or custom pipelines, use the Claude agent directly:
-
-```python
-from claw_swarm import run_claude_agent
-
-responses = run_claude_agent(
-    name="CodeReviewer",
-    description="Reviews Python code.",
-    prompt="Respond in bullet points. Flag security issues.",
-    tasks="Review the authentication logic in auth.py",
-)
-```
-
-Async and streaming are available via `run_claude_agent_async` and `stream_claude_agent`.
 
 ---
 

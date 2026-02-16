@@ -11,8 +11,14 @@ from google.protobuf.internal import builder as _builder
 
 try:
     from google.protobuf import runtime_version as _runtime_version
+
     _runtime_version.ValidateProtobufRuntimeVersion(
-        _runtime_version.Domain.PUBLIC, 5, 29, 0, "", "messaging_gateway.proto"
+        _runtime_version.Domain.PUBLIC,
+        5,
+        29,
+        0,
+        "",
+        "messaging_gateway.proto",
     )
 except ImportError:
     pass  # older protobuf has no runtime_version
@@ -27,7 +33,9 @@ DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "messaging_gateway_pb2", _globals)
+_builder.BuildTopDescriptorsAndMessages(
+    DESCRIPTOR, "messaging_gateway_pb2", _globals
+)
 if not _descriptor._USE_C_DESCRIPTORS:
     DESCRIPTOR._loaded_options = None
     _globals["_PLATFORM"]._serialized_start = 636

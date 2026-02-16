@@ -11,11 +11,15 @@ from pathlib import Path
 
 # Project root: directory containing the claw_swarm package
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MEMORY_FILENAME = os.environ.get("AGENT_MEMORY_FILE", "agent_memory.md")
+MEMORY_FILENAME = os.environ.get(
+    "AGENT_MEMORY_FILE", "agent_memory.md"
+)
 MEMORY_PATH = _PROJECT_ROOT / MEMORY_FILENAME
 
 # Cap size so we don't send huge context every time (keep last ~100KB of content)
-MAX_MEMORY_CHARS = int(os.environ.get("AGENT_MEMORY_MAX_CHARS", "100000"))
+MAX_MEMORY_CHARS = int(
+    os.environ.get("AGENT_MEMORY_MAX_CHARS", "100000")
+)
 
 
 def get_memory_path() -> Path:
@@ -50,7 +54,7 @@ def append_interaction(
     message_id: str = "",
 ) -> None:
     """
-    Append one user/assistant exchange to the memory file (markdown).
+    Append one user/agent exchange to the memory file (markdown).
     Creates the file if it does not exist.
     """
     path = get_memory_path()
@@ -64,7 +68,7 @@ def append_interaction(
 - **Platform:** {platform}
 - **Channel:** {channel}
 - **{who}:** {_escape_block(user_text)}
-- **Assistant:** {_escape_block(reply_text)}
+- **ClawSwarm:** {_escape_block(reply_text)}
 """
     try:
         path.parent.mkdir(parents=True, exist_ok=True)

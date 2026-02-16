@@ -13,7 +13,9 @@ from grpc import aio as grpc_aio
 
 from claw_swarm.gateway.adapters.base import MessageAdapter
 from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
-from claw_swarm.gateway.proto import messaging_gateway_pb2_grpc as pb_grpc
+from claw_swarm.gateway.proto import (
+    messaging_gateway_pb2_grpc as pb_grpc,
+)
 from claw_swarm.gateway.schema import Platform
 
 
@@ -34,7 +36,9 @@ class MessagingGatewayServicer(pb_grpc.MessagingGatewayServicer):
         adapters: Sequence[MessageAdapter],
         version: str = "0.1.0",
     ) -> None:
-        self._adapters_by_platform: dict[Platform, MessageAdapter] = {}
+        self._adapters_by_platform: dict[Platform, MessageAdapter] = (
+            {}
+        )
         for a in adapters:
             name = a.platform_name.lower()
             if name == "telegram":
@@ -45,26 +49,36 @@ class MessagingGatewayServicer(pb_grpc.MessagingGatewayServicer):
                 self._adapters_by_platform[Platform.WHATSAPP] = a
         self._version = version
 
-    def _adapters_for_request(self, platforms: Sequence[int]) -> list[MessageAdapter]:
+    def _adapters_for_request(
+        self, platforms: Sequence[int]
+    ) -> list[MessageAdapter]:
         if not platforms or (
-            len(platforms) == 1 and platforms[0] == pb.PLATFORM_UNSPECIFIED
+            len(platforms) == 1
+            and platforms[0] == pb.PLATFORM_UNSPECIFIED
         ):
             return list(self._adapters_by_platform.values())
         out = []
         for p in platforms:
             plat = _PLATFORM_MAP.get(p, Platform.UNSPECIFIED)
-            if plat != Platform.UNSPECIFIED and plat in self._adapters_by_platform:
+            if (
+                plat != Platform.UNSPECIFIED
+                and plat in self._adapters_by_platform
+            ):
                 out.append(self._adapters_by_platform[plat])
         return out
 
     async def PollMessages(
-        self, request: pb.PollMessagesRequest, context: grpc.aio.ServicerContext
+        self,
+        request: pb.PollMessagesRequest,
+        context: grpc.aio.ServicerContext,
     ) -> pb.PollMessagesResponse:
         adapters = self._adapters_for_request(list(request.platforms))
         since_ms = request.since_timestamp_utc_ms or 0
         max_messages = request.max_messages or 100
         all_messages: list[pb.UnifiedMessage] = []
-        per_adapter = max(1, max_messages // len(adapters)) if adapters else 0
+        per_adapter = (
+            max(1, max_messages // len(adapters)) if adapters else 0
+        )
         for adapter in adapters:
             try:
                 batch = await adapter.fetch_messages(
@@ -78,10 +92,14 @@ class MessagingGatewayServicer(pb_grpc.MessagingGatewayServicer):
                 context.set_details(str(e))
                 return pb.PollMessagesResponse(messages=[])
         all_messages.sort(key=lambda m: m.timestamp_utc_ms)
-        return pb.PollMessagesResponse(messages=all_messages[:max_messages])
+        return pb.PollMessagesResponse(
+            messages=all_messages[:max_messages]
+        )
 
     async def StreamMessages(
-        self, request: pb.StreamMessagesRequest, context: grpc.aio.ServicerContext
+        self,
+        request: pb.StreamMessagesRequest,
+        context: grpc.aio.ServicerContext,
     ):
         adapters = self._adapters_for_request(list(request.platforms))
         if not adapters:
@@ -103,7 +121,9 @@ class MessagingGatewayServicer(pb_grpc.MessagingGatewayServicer):
             pass
 
     async def Health(
-        self, request: pb.HealthRequest, context: grpc.aio.ServicerContext
+        self,
+        request: pb.HealthRequest,
+        context: grpc.aio.ServicerContext,
     ) -> pb.HealthResponse:
         return pb.HealthResponse(ok=True, version=self._version)
 

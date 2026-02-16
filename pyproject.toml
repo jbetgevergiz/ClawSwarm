@@ -1,0 +1,96 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry]
+name = "claw-swarm"
+version = "0.0.1"
+description = "A lightweight multi-agent version of OpenClaw built on the Swarms framework. One API, unified messaging across Telegram, Discord, and WhatsApp with optional Claude-powered reasoning."
+license = "Apache-2.0"
+authors = ["The-Swarm-Corporation"]
+homepage = "https://github.com/The-Swarm-Corporation/ClawSwarm"
+documentation = "https://github.com/The-Swarm-Corporation/ClawSwarm#readme"
+readme = "README.md"
+repository = "https://github.com/The-Swarm-Corporation/ClawSwarm"
+keywords = [
+    "openclaw",
+    "swarms",
+    "multi-agent",
+    "agents",
+    "messaging-gateway",
+    "telegram",
+    "discord",
+    "whatsapp",
+    "grpc",
+    "claude",
+    "llm",
+    "artificial intelligence",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+setuptools = "*"
+claude-agent-sdk = "*"
+anyio = "*"
+grpcio = "*"
+grpcio-tools = "*"
+protobuf = "*"
+pydantic = "*"
+aiohttp = "*"
+swarms = "*"
+loguru = "*"
+
+[tool.poetry.scripts]
+clawswarm-gateway = "claw_swarm.gateway.__main__:main"
+clawswarm-agent = "claw_swarm.agent_runner:main"
+
+[tool.poetry.group.lint.dependencies]
+black = ">=23.1,<27.0"
+ruff = ">=0.5.1,<0.14.15"
+types-toml = "^0.10.8.1"
+types-pytz = ">=2023.3,<2026.0"
+types-chardet = "^5.0.4.6"
+mypy-protobuf = ">=3,<6"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.1.1,<10.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+ruff = "*"
+pytest = "*"
+
+[tool.ruff]
+line-length = 70
+
+[tool.black]
+target-version = ["py38"]
+line-length = 70
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | docs
+)/
+'''
+

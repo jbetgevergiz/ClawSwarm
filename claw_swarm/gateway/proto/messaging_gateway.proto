@@ -8,6 +8,7 @@ enum Platform {
   TELEGRAM = 1;
   DISCORD = 2;
   WHATSAPP = 3;
+  EMAIL = 4;
 }
 
 // Unified message schema: same structure for Telegram, Discord, WhatsApp

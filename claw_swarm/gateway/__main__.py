@@ -7,15 +7,17 @@ from __future__ import annotations
 import asyncio
 import os
 
+import grpc
+
+from claw_swarm.gateway import (
+    DiscordAdapter,
+    TelegramAdapter,
+    WhatsAppAdapter,
+    run_server,
+)
+
 
 def main() -> None:
-    from claw_swarm.gateway import (
-        DiscordAdapter,
-        TelegramAdapter,
-        WhatsAppAdapter,
-        run_server,
-    )
-
     adapters = [
         TelegramAdapter(),
         DiscordAdapter(),
@@ -23,7 +25,11 @@ def main() -> None:
     ]
     host = os.environ.get("GATEWAY_HOST", "[::]")
     port = int(os.environ.get("GATEWAY_PORT", "50051"))
-    use_tls = os.environ.get("GATEWAY_TLS", "").strip().lower() in ("1", "true", "yes")
+    use_tls = os.environ.get("GATEWAY_TLS", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
     server_credentials = None
     if use_tls:
         cert_file = os.environ.get("GATEWAY_TLS_CERT_FILE")
@@ -33,8 +39,6 @@ def main() -> None:
                 cert = f.read()
             with open(key_file, "rb") as f:
                 key = f.read()
-            import grpc
-
             server_credentials = grpc.ssl_server_credentials(
                 ((key, cert),)
             )

@@ -10,7 +10,10 @@ from claw_swarm.gateway.adapters import (
     WhatsAppAdapter,
 )
 from claw_swarm.gateway.schema import Platform, UnifiedMessage
-from claw_swarm.gateway.server import MessagingGatewayServicer, run_server
+from claw_swarm.gateway.server import (
+    MessagingGatewayServicer,
+    run_server,
+)
 
 __all__ = [
     "DiscordAdapter",

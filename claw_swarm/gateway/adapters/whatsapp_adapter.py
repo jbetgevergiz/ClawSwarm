@@ -23,7 +23,9 @@ class WhatsAppAdapter(MessageAdapter):
         access_token: str | None = None,
         phone_number_id: str | None = None,
     ) -> None:
-        self._token = access_token or os.environ.get("WHATSAPP_ACCESS_TOKEN")
+        self._token = access_token or os.environ.get(
+            "WHATSAPP_ACCESS_TOKEN"
+        )
         self._phone_number_id = phone_number_id or os.environ.get(
             "WHATSAPP_PHONE_NUMBER_ID"
         )
@@ -47,7 +49,10 @@ class WhatsAppAdapter(MessageAdapter):
         queue_key = os.environ.get("WHATSAPP_QUEUE_PATH")
         if queue_key:
             return await _drain_queue(
-                queue_key, since_timestamp_utc_ms, max_messages, Platform.WHATSAPP
+                queue_key,
+                since_timestamp_utc_ms,
+                max_messages,
+                Platform.WHATSAPP,
             )
         return []
 

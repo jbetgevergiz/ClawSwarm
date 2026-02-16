@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+import aiohttp
 from loguru import logger
 
 from claw_swarm.gateway.adapters.base import MessageAdapter
@@ -39,10 +40,6 @@ class DiscordAdapter(MessageAdapter):
     ) -> list[UnifiedMessage]:
         if not self._token or not self._channel_ids:
             return []
-        try:
-            import aiohttp
-        except ImportError:
-            return []
         out: list[UnifiedMessage] = []
         per_channel = max(1, max_messages // len(self._channel_ids))
         base = "https://discord.com/api/v10"
@@ -64,7 +61,10 @@ class DiscordAdapter(MessageAdapter):
                     if msg.get("type") != 0:
                         continue
                     ts = _discord_snowflake_to_ms(msg["id"])
-                    if since_timestamp_utc_ms and ts <= since_timestamp_utc_ms:
+                    if (
+                        since_timestamp_utc_ms
+                        and ts <= since_timestamp_utc_ms
+                    ):
                         continue
                     author = msg.get("author", {})
                     attachments = [
@@ -94,11 +94,17 @@ class DiscordAdapter(MessageAdapter):
                         um.channel_id,
                         um.sender_handle,
                         um.id,
-                        (um.text[:80] + "..." if len(um.text) > 80 else um.text),
+                        (
+                            um.text[:80] + "..."
+                            if len(um.text) > 80
+                            else um.text
+                        ),
                     )
                 if len(out) >= max_messages:
                     break
-        return sorted(out, key=lambda m: m.timestamp_utc_ms)[:max_messages]
+        return sorted(out, key=lambda m: m.timestamp_utc_ms)[
+            :max_messages
+        ]
 
 
 def _channel_ids_from_env() -> list[str]:

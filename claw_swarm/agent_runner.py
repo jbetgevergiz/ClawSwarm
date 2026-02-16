@@ -9,6 +9,7 @@ Runs 24/7 until interrupted (SIGINT/SIGTERM). Configure via environment variable
 from __future__ import annotations
 
 import asyncio
+import grpc
 import os
 import signal
 import sys
@@ -16,10 +17,74 @@ from typing import Callable, Optional
 
 from claw_swarm.agent import create_agent
 from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
-from claw_swarm.gateway.proto import messaging_gateway_pb2_grpc as pb_grpc
+from claw_swarm.prompts import CLAWSWARM_SYSTEM
+from claw_swarm.gateway.proto import (
+    messaging_gateway_pb2_grpc as pb_grpc,
+)
 from claw_swarm.gateway.schema import UnifiedMessage
 from claw_swarm.memory import append_interaction, read_memory
 from claw_swarm.replier import send_message_async
+
+
+def _extract_final_reply(
+    raw_output: str, current_user_message: str
+) -> str:
+    """
+    Extract only the final agent reply from the agent output.
+
+    The Swarms agent (or LLM) may return the full conversation, echoed context,
+    and "[Current message to answer]" blocks. We want only the last reply to send
+    to Telegram/Discord/WhatsApp.
+    """
+    if not raw_output or not raw_output.strip():
+        return raw_output or ""
+    text = raw_output.strip()
+    marker = "[Current message to answer]"
+    if marker in text:
+        # Take everything after the last occurrence of the marker
+        idx = text.rfind(marker)
+        after_marker = text[idx + len(marker) :].strip()
+        # Strip optional newline after marker, then optional echoed user message
+        after_marker = after_marker.lstrip("\n").strip()
+        task_stripped = (current_user_message or "").strip()
+        if task_stripped and after_marker.startswith(task_stripped):
+            remainder = (
+                after_marker[len(task_stripped) :]
+                .strip()
+                .lstrip("\n")
+            )
+            if remainder:
+                return remainder.strip()
+        return after_marker
+    # No marker: try to take the last agent reply (ClawSwarm or legacy Assistant label)
+    for label in (
+        "**ClawSwarm:**",
+        "ClawSwarm:",
+        "**Assistant:**",
+        "Assistant:",
+    ):
+        idx = text.rfind(label)
+        if idx >= 0:
+            reply = text[idx + len(label) :].strip()
+            if reply:
+                return reply
+    # Fallback: last contiguous block of content (skip trailing context headers)
+    lines = [ln.strip() for ln in text.split("\n")]
+    i = len(lines) - 1
+    while i >= 0 and not lines[i]:
+        i -= 1
+    if i < 0:
+        return text
+    j = i
+    while (
+        j >= 0
+        and lines[j]
+        and not (
+            lines[j].startswith("[") and "context" in lines[j].lower()
+        )
+    ):
+        j -= 1
+    return "\n".join(lines[j + 1 : i + 1]).strip() or text
 
 
 def _get_gateway_target() -> str:
@@ -41,24 +106,31 @@ async def _process_message(
     task = msg.text.strip() if msg.text else "(no text)"
     if not task:
         return
-    # Inject recent memory so the agent remembers past interactions across apps
+    # 1. System prompt first so the agent always has identity and instructions.
+    # 2. Then memory (past conversations) so it doesn't override or confuse the system.
+    # 3. Then the current message to answer.
+    task_with_context = (
+        "[Your system instructions - follow these]\n"
+        f"{CLAWSWARM_SYSTEM.strip()}\n\n"
+    )
     memory_content = read_memory()
     if memory_content:
-        task_with_context = (
-            "[Recent context from previous interactions]\n"
+        task_with_context += (
+            "[Previous conversation context from memory]\n"
             f"{memory_content}\n\n"
-            "[Current message to answer]\n"
-            f"{task}"
         )
-    else:
-        task_with_context = task
+    task_with_context += f"[Current message to answer]\n{task}"
     try:
         # Swarms Agent.run() is synchronous; run in thread to avoid blocking the async loop
-        reply_text = await asyncio.to_thread(agent.run, task_with_context)
-        if not reply_text or not str(reply_text).strip():
-            reply_text = "I'm sorry, I couldn't generate a reply for that."
-        else:
-            reply_text = str(reply_text).strip()
+        raw_output = await asyncio.to_thread(
+            agent.run, task_with_context
+        )
+        raw_str = str(raw_output).strip() if raw_output else ""
+        reply_text = _extract_final_reply(raw_str, task)
+        if not reply_text:
+            reply_text = (
+                "I'm sorry, I couldn't generate a reply for that."
+            )
     except Exception as e:
         reply_text = f"Sorry, something went wrong: {e!s}"
     # Persist this interaction to memory (project root markdown file)
@@ -99,8 +171,6 @@ async def run_agent_loop(
     Uses the Swarms agent from create_agent() (ClawSwarm prompt + Claude as tool). Runs until the task
     is cancelled (e.g. SIGINT/SIGTERM). Uses insecure gRPC by default.
     """
-    import grpc
-
     if agent is None:
         agent = create_agent()
     target = gateway_target or _get_gateway_target()
@@ -123,7 +193,9 @@ async def run_agent_loop(
                         since_ms = msg.timestamp_utc_ms
                     if on_message:
                         on_message(msg)
-                    await _process_message(msg, agent=agent, on_reply=on_reply)
+                    await _process_message(
+                        msg, agent=agent, on_reply=on_reply
+                    )
             except grpc.RpcError as e:
                 if e.code() == grpc.StatusCode.UNAVAILABLE:
                     print(

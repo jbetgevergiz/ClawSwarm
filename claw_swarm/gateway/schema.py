@@ -8,6 +8,7 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import Any
 
+from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
 from pydantic import BaseModel, Field
 
 
@@ -16,6 +17,7 @@ class Platform(IntEnum):
     TELEGRAM = 1
     DISCORD = 2
     WHATSAPP = 3
+    EMAIL = 4
 
 
 class UnifiedMessage(BaseModel):
@@ -35,9 +37,7 @@ class UnifiedMessage(BaseModel):
     model_config = {"extra": "forbid"}
 
     def to_grpc(self) -> Any:
-        """Convert to protobuf UnifiedMessage (caller imports messaging_gateway_pb2)."""
-        from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
-
+        """Convert to protobuf UnifiedMessage."""
         return pb.UnifiedMessage(
             id=self.id,
             platform=int(self.platform),

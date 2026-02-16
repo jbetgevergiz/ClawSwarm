@@ -6,3 +6,4 @@ protobuf
 pydantic
 aiohttp
 swarms
+loguru

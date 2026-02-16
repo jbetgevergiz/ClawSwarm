@@ -18,6 +18,7 @@ from claw_swarm.agent import create_agent
 from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
 from claw_swarm.gateway.proto import messaging_gateway_pb2_grpc as pb_grpc
 from claw_swarm.gateway.schema import UnifiedMessage
+from claw_swarm.memory import append_interaction, read_memory
 from claw_swarm.replier import send_message_async
 
 
@@ -40,15 +41,36 @@ async def _process_message(
     task = msg.text.strip() if msg.text else "(no text)"
     if not task:
         return
+    # Inject recent memory so the agent remembers past interactions across apps
+    memory_content = read_memory()
+    if memory_content:
+        task_with_context = (
+            "[Recent context from previous interactions]\n"
+            f"{memory_content}\n\n"
+            "[Current message to answer]\n"
+            f"{task}"
+        )
+    else:
+        task_with_context = task
     try:
         # Swarms Agent.run() is synchronous; run in thread to avoid blocking the async loop
-        reply_text = await asyncio.to_thread(agent.run, task)
+        reply_text = await asyncio.to_thread(agent.run, task_with_context)
         if not reply_text or not str(reply_text).strip():
             reply_text = "I'm sorry, I couldn't generate a reply for that."
         else:
             reply_text = str(reply_text).strip()
     except Exception as e:
         reply_text = f"Sorry, something went wrong: {e!s}"
+    # Persist this interaction to memory (project root markdown file)
+    append_interaction(
+        platform=msg.platform.name,
+        channel_id=msg.channel_id,
+        thread_id=msg.thread_id or "",
+        sender_handle=msg.sender_handle or "",
+        user_text=task,
+        reply_text=reply_text,
+        message_id=msg.id,
+    )
     # Send back to the same channel/thread
     ok, err = await send_message_async(
         platform=msg.platform,

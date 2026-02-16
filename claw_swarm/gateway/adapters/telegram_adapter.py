@@ -8,6 +8,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from claw_swarm.gateway.adapters.base import MessageAdapter
 from claw_swarm.gateway.schema import Platform, UnifiedMessage
 
@@ -67,19 +69,25 @@ class TelegramAdapter(MessageAdapter):
                         if isinstance(msg[key], list)
                         else str(msg[key])
                     )
-            out.append(
-                UnifiedMessage(
-                    id=str(msg["message_id"]),
-                    platform=Platform.TELEGRAM,
-                    channel_id=str(chat.get("id", "")),
-                    thread_id=str(chat.get("message_thread_id", "")),
-                    sender_id=str(from_.get("id", "")),
-                    sender_handle=from_.get("username", "")
-                    or from_.get("first_name", ""),
-                    text=text,
-                    attachment_urls=attachments,
-                    timestamp_utc_ms=ts,
-                )
+            um = UnifiedMessage(
+                id=str(msg["message_id"]),
+                platform=Platform.TELEGRAM,
+                channel_id=str(chat.get("id", "")),
+                thread_id=str(chat.get("message_thread_id", "")),
+                sender_id=str(from_.get("id", "")),
+                sender_handle=from_.get("username", "")
+                or from_.get("first_name", ""),
+                text=text,
+                attachment_urls=attachments,
+                timestamp_utc_ms=ts,
+            )
+            out.append(um)
+            logger.info(
+                "[Message Received] platform=telegram channel_id={} sender_handle={} msg_id={} text_preview={!r}",
+                um.channel_id,
+                um.sender_handle,
+                um.id,
+                (um.text[:80] + "..." if len(um.text) > 80 else um.text),
             )
             if len(out) >= max_messages:
                 break

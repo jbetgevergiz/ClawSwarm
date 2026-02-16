@@ -50,7 +50,7 @@ def create_agent(
 
     prompt = system_prompt if system_prompt is not None else CLAWSWARM_SYSTEM
 
-    model = model_name or os.environ.get("AGENT_MODEL", "gpt-4o-mini")
+    model = "gpt-4.1"
     description = agent_description or (
         "Enterprise-grade assistant that responds on Telegram, Discord, and WhatsApp; "
         "uses Claude as a tool for deep reasoning and code."
@@ -61,6 +61,6 @@ def create_agent(
         agent_description=description,
         system_prompt=prompt,
         model_name=model,
-        max_loops=max_loops,
-        tools=[call_claude, exa_search],
+        max_loops=1,
+        # tools=[call_claude, exa_search],
     )

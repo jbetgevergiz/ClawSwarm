@@ -8,6 +8,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from claw_swarm.gateway.adapters.base import MessageAdapter
 from claw_swarm.gateway.schema import Platform, UnifiedMessage
 
@@ -70,23 +72,29 @@ class DiscordAdapter(MessageAdapter):
                         for a in msg.get("attachments", [])
                         if a.get("url")
                     ]
-                    out.append(
-                        UnifiedMessage(
-                            id=msg["id"],
-                            platform=Platform.DISCORD,
-                            channel_id=str(msg.get("channel_id", "")),
-                            thread_id=(
-                                str(msg.get("thread", {}).get("id", ""))
-                                if isinstance(msg.get("thread"), dict)
-                                else ""
-                            ),
-                            sender_id=author.get("id", ""),
-                            sender_handle=author.get("username", "")
-                            or author.get("global_name", ""),
-                            text=msg.get("content", ""),
-                            attachment_urls=attachments,
-                            timestamp_utc_ms=ts,
-                        )
+                    um = UnifiedMessage(
+                        id=msg["id"],
+                        platform=Platform.DISCORD,
+                        channel_id=str(msg.get("channel_id", "")),
+                        thread_id=(
+                            str(msg.get("thread", {}).get("id", ""))
+                            if isinstance(msg.get("thread"), dict)
+                            else ""
+                        ),
+                        sender_id=author.get("id", ""),
+                        sender_handle=author.get("username", "")
+                        or author.get("global_name", ""),
+                        text=msg.get("content", ""),
+                        attachment_urls=attachments,
+                        timestamp_utc_ms=ts,
+                    )
+                    out.append(um)
+                    logger.info(
+                        "[Message Received] platform=discord channel_id={} sender_handle={} msg_id={} text_preview={!r}",
+                        um.channel_id,
+                        um.sender_handle,
+                        um.id,
+                        (um.text[:80] + "..." if len(um.text) > 80 else um.text),
                     )
                 if len(out) >= max_messages:
                     break

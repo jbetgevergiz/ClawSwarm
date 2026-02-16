@@ -60,4 +60,5 @@ async def _drain_queue(
 ) -> list[UnifiedMessage]:
     """Drain messages from a file-based or Redis queue (stub). Extend for your queue backend."""
     # Stub: no actual queue implementation; integrate with your webhook store (Redis, DB, file).
+    # When implementing: log each message with [Message Received] platform=whatsapp (see telegram_adapter).
     return []

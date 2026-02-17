@@ -113,12 +113,12 @@ def create_agent(
         description=CLAWSWARM_AGENT_DESCRIPTION,
         system_prompt=base_system,
     )
-    
+
     model_name = (
         os.environ.get("AGENT_MODEL", "gpt-4o-mini").strip()
         or "gpt-4o-mini"
     )
-    
+
     return Agent(
         agent_name=agent_name,
         agent_description=CLAWSWARM_AGENT_DESCRIPTION,

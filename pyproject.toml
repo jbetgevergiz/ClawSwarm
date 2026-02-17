@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "claw-swarm"
-version = "0.0.1"
+version = "0.0.4"
 description = "A lightweight multi-agent version of OpenClaw built on the Swarms framework. One API, unified messaging across Telegram, Discord, and WhatsApp with optional Claude-powered reasoning."
 license = "Apache-2.0"
 authors = ["The-Swarm-Corporation"]
@@ -41,10 +41,12 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 setuptools = "*"
+python-dotenv = "*"
 claude-agent-sdk = "*"
 anyio = "*"
 grpcio = "*"
 grpcio-tools = "*"
+httpx = "*"
 protobuf = "*"
 pydantic = "*"
 aiohttp = "*"
@@ -52,6 +54,7 @@ swarms = "*"
 loguru = "*"
 
 [tool.poetry.scripts]
+clawswarm = "claw_swarm.cli:main"
 clawswarm-gateway = "claw_swarm.gateway.__main__:main"
 clawswarm-agent = "claw_swarm.agent_runner:main"
 

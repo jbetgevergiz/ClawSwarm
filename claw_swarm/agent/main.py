@@ -31,6 +31,8 @@ See also:
 
 from __future__ import annotations
 
+import os
+
 from swarms import Agent
 
 from claw_swarm.prompts import (
@@ -42,6 +44,7 @@ from claw_swarm.prompts import (
     build_agent_system_prompt,
 )
 from claw_swarm.tools import run_claude_agent
+from claw_swarm.swarms_world_tools import claim_fees, launch_token
 
 
 def call_claude(task: str) -> str:
@@ -91,7 +94,7 @@ def create_agent(
         Agent: An instance of swarms.Agent ready for `.run(task)` calls.
 
     Config:
-        - Uses the GPT-4.1 model for output quality.
+        - Model: from env AGENT_MODEL (default "gpt-4o-mini").
         - max_loops=1 (single-pass response, suitable for messaging platforms)
         - output_type="final" (concise, delivery-ready output)
 
@@ -110,11 +113,16 @@ def create_agent(
         description=CLAWSWARM_AGENT_DESCRIPTION,
         system_prompt=base_system,
     )
+    model_name = (
+        os.environ.get("AGENT_MODEL", "gpt-4o-mini").strip()
+        or "gpt-4o-mini"
+    )
     return Agent(
         agent_name=agent_name,
         agent_description=CLAWSWARM_AGENT_DESCRIPTION,
         system_prompt=full_system_prompt,
-        model_name="gpt-4.1",
+        model_name=model_name,
         max_loops=1,
         output_type="final",
+        tools=[launch_token, claim_fees],
     )

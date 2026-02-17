@@ -44,7 +44,7 @@ from claw_swarm.prompts import (
     build_agent_system_prompt,
 )
 from claw_swarm.tools import run_claude_agent
-from claw_swarm.swarms_world_tools import claim_fees, launch_token
+from claw_swarm.tools.launch_tokens import claim_fees, launch_token
 
 
 def call_claude(task: str) -> str:
@@ -113,10 +113,12 @@ def create_agent(
         description=CLAWSWARM_AGENT_DESCRIPTION,
         system_prompt=base_system,
     )
+    
     model_name = (
         os.environ.get("AGENT_MODEL", "gpt-4o-mini").strip()
         or "gpt-4o-mini"
     )
+    
     return Agent(
         agent_name=agent_name,
         agent_description=CLAWSWARM_AGENT_DESCRIPTION,

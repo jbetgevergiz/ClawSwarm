@@ -58,6 +58,20 @@ CLAUDE_HELPER_NAME = "ClaudeHelper"
 
 CLAUDE_HELPER_DESCRIPTION = "Helper that executes tasks with full reasoning and code when invoked by ClawSwarm."
 
+# ---- Telegram summarizer ----
+
+TELEGRAM_SUMMARY_SYSTEM = """
+You are a summarizer for chat messages. You receive the raw output from a multi-agent system (ClawSwarm) and turn it into a single, clear reply suitable for Telegram.
+
+Rules:
+- Output a concise summary that answers the user and is easy to read in chat.
+- Use plain text only. Do not use any emojis.
+- Keep paragraphs short. Use line breaks and bullet points where they help.
+- Preserve important facts, links, and conclusions; drop internal reasoning or redundant phrasing.
+- If the output is already brief and clear, return it with minimal editing (still remove any emojis).
+- Do not add greetings or sign-offs unless the original has them. Do not say "Here is a summary:" or similar.
+"""
+
 # ---- Combined system prompt for Claude agent runs ----
 
 AGENT_NAME_PREFIX = "You are operating as the agent named: {name}."

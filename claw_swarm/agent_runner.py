@@ -15,7 +15,7 @@ import signal
 import sys
 from typing import Callable, Optional
 
-from claw_swarm.agent import create_agent
+from claw_swarm.agent import create_agent, summarize_for_telegram
 from claw_swarm.gateway.proto import messaging_gateway_pb2 as pb
 from claw_swarm.prompts import CLAWSWARM_SYSTEM
 from claw_swarm.gateway.proto import (
@@ -121,12 +121,17 @@ async def _process_message(
         )
     task_with_context += f"[Current message to answer]\n{task}"
     try:
-        # Swarms Agent.run() is synchronous; run in thread to avoid blocking the async loop
+        # Swarms agent (hierarchical swarm) .run() is synchronous; run in thread
         raw_output = await asyncio.to_thread(
             agent.run, task_with_context
         )
         raw_str = str(raw_output).strip() if raw_output else ""
-        reply_text = _extract_final_reply(raw_str, task)
+        # Summarize swarm output for Telegram (concise, no emojis)
+        reply_text = await asyncio.to_thread(
+            summarize_for_telegram, raw_str
+        )
+        if not reply_text:
+            reply_text = _extract_final_reply(raw_str, task)
         if not reply_text:
             reply_text = (
                 "I'm sorry, I couldn't generate a reply for that."

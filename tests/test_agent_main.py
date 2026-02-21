@@ -61,71 +61,86 @@ class TestCallClaude:
 
 
 class TestCreateAgent:
-    """Test create_agent."""
+    """Test create_agent (returns HierarchicalSwarm with director + workers)."""
 
-    def test_returns_agent_instance(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
-            mock_agent.return_value = MagicMock()
+    def test_returns_swarm_instance(self):
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
+            mock_swarm.return_value = MagicMock()
             result = agent_main.create_agent()
-        assert result is mock_agent.return_value
+        assert result is mock_swarm.return_value
 
     def test_uses_default_agent_name(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
             agent_main.create_agent()
-        call_kw = mock_agent.call_args[1]
-        assert call_kw["agent_name"] == "ClawSwarm"
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["name"] == "ClawSwarm"
+        assert call_kw["director_name"] == "ClawSwarm"
+        assert call_kw["director"] is None
 
     def test_custom_agent_name(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
             agent_main.create_agent(agent_name="CustomBot")
-        call_kw = mock_agent.call_args[1]
-        assert call_kw["agent_name"] == "CustomBot"
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["name"] == "CustomBot"
+        assert call_kw["director_name"] == "CustomBot"
 
     def test_custom_system_prompt(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
             agent_main.create_agent(
                 system_prompt="Custom instructions."
             )
-        call_kw = mock_agent.call_args[1]
-        assert "Custom instructions." in call_kw["system_prompt"]
-
-    def test_agent_config_max_loops_and_output_type(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
-            agent_main.create_agent()
-        call_kw = mock_agent.call_args[1]
-        assert call_kw["max_loops"] == 1
-        assert call_kw["output_type"] == "final"
-
-    def test_agent_has_tools(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
-            agent_main.create_agent()
-        call_kw = mock_agent.call_args[1]
-        assert "tools" in call_kw
-        tools = call_kw["tools"]
-        assert len(tools) >= 1
-        # launch_token and claim_fees are in the list
-        from claw_swarm.tools.launch_tokens import (
-            claim_fees,
-            launch_token,
+        call_kw = mock_swarm.call_args[1]
+        assert (
+            "Custom instructions."
+            in call_kw["director_system_prompt"]
         )
 
-        assert launch_token in tools
-        assert claim_fees in tools
+    def test_director_uses_builtin_with_clawswarm_prompt(self):
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
+            agent_main.create_agent()
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["director"] is None
+        assert "director_system_prompt" in call_kw
+        assert "ClawSwarm" in call_kw["director_system_prompt"]
+
+    def test_swarm_has_worker_agents(self):
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
+            agent_main.create_agent()
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["agents"] is agent_main.WORKER_AGENTS
+        assert len(call_kw["agents"]) == 3
+        assert call_kw["director"] is None
 
     def test_model_from_env(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
             with patch.dict(
                 os.environ, {"AGENT_MODEL": "gpt-4o"}, clear=False
             ):
                 agent_main.create_agent()
-        call_kw = mock_agent.call_args[1]
-        assert call_kw["model_name"] == "gpt-4o"
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["director_model_name"] == "gpt-4o"
 
     def test_model_default_when_env_empty(self):
-        with patch("claw_swarm.agent.main.Agent") as mock_agent:
+        with patch(
+            "claw_swarm.agent.main.HierarchicalSwarm"
+        ) as mock_swarm:
             with patch.dict(
                 os.environ, {"AGENT_MODEL": ""}, clear=False
             ):
                 agent_main.create_agent()
-        call_kw = mock_agent.call_args[1]
-        assert call_kw["model_name"] == "gpt-4o-mini"
+        call_kw = mock_swarm.call_args[1]
+        assert call_kw["director_model_name"] == "gpt-4o-mini"

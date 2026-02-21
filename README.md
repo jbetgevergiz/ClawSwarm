@@ -38,21 +38,23 @@
 
 ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **natively multi-agent** AI that responds to users on Telegram, Discord, and WhatsApp through a centralized **Messaging Gateway**. The gateway normalizes incoming messages; the **ClawSwarm Agent** (Swarms framework, configurable system prompt, Claude as a tool) processes each message and replies via a **Replier** back to the originating channel. Built on the Swarms ecosystem for reliability, security, and minimal operational overhead—with a path to **compile to Rust** for performance and deployment flexibility.
 
-**Key capabilities**
+---
 
-- **Lighter than OpenClaw** — Smaller footprint and simpler stack; same multi-channel vision without the full OpenClaw surface area.
+## Features
 
-- **Natively multi-agent** — Designed from the ground up for multi-agent orchestration on the Swarms framework and Swarms ecosystem.
+- **Multi-channel messaging** — One API for Telegram, Discord, and WhatsApp. The gateway normalizes messages; the agent replies back to the correct channel.
 
-- **Unified ingestion** — One gRPC API for all supported channels; add or remove platforms without changing agent logic.
+- **Hierarchical multi-agent architecture** — A **director** agent (ClawSwarm) receives each message, creates a plan, and delegates to specialist **worker** agents via structured orders (SwarmSpec). Workers handle response, search, token launch, or code; the director orchestrates and the **Telegram Summarizer** turns combined output into a concise, emoji-free reply for chat.
 
-- **Swarms-native agent** — Industry-standard orchestration, configurable model and system prompt, Claude available as a tool for deep reasoning and code.
+- **Specialist workers** — **ClawSwarm-Response** (greetings, short answers), **ClawSwarm-Search** (web/semantic search via Exa), **ClawSwarm-TokenLaunch** (launch tokens and claim fees on Swarms World/Solana), **ClawSwarm-Developer** (implementation and debugging via Claude Code). Each worker has a focused role and tools; the director chooses who does what.
 
-- **Compiles to Rust** — Build path to Rust for performance and deployment flexibility.
+- **Claude as a tool** — Deep reasoning and code are handled by Claude (e.g. via the Developer worker’s `run_claude_developer`). Configurable system prompts in `claw_swarm.prompts`; override with `create_agent(system_prompt=...)`.
 
-- **Prompts in code** — Agent and Claude-tool prompts are Python strings in `claw_swarm.prompts`; override via `create_agent(system_prompt=...)` or edit the module.
+- **Unified gRPC gateway** — Single ingest API for all channels; add or remove platforms without changing agent logic. Optional TLS, health checks, and normalized `UnifiedMessage` schema.
 
-- **Production-ready** — Optional TLS, environment-based configuration, long-running agent loop suitable for systemd, Docker, or managed runtimes.
+- **Lighter than OpenClaw** — Smaller footprint and simpler stack; same multi-channel, multi-agent vision without the full OpenClaw surface area. Path to compile to Rust for performance and deployment flexibility.
+
+- **Production-ready** — Environment-based configuration, long-running agent loop, Dockerfile, and 24/7 operation under systemd or managed runtimes.
 
 ---
 
@@ -83,9 +85,13 @@ ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **n
 
 **Flow:** User messages arrive on any channel → Gateway normalizes and exposes via gRPC → Hierarchical Swarm (director + workers) runs → Telegram Summarizer shortens output for chat (no emojis) → Replier sends the response to the correct channel.
 
-### Hierarchical swarm (Mermaid)
+### Hierarchical architecture
 
-The main agent is a **HierarchicalSwarm**: a director assigns tasks to specialist workers, then a summarizer prepares the final reply for chat.
+The core of ClawSwarm is a **hierarchical multi-agent system** built on Swarms’ `HierarchicalSwarm`. A single **director** agent sits at the top: it receives every user message, decides what to do, and delegates to one or more **worker** agents by emitting structured **SwarmSpec** orders (plan + task assignments). Workers are specialists with narrow roles and tools; they run their tasks and return results. The director does not execute tools itself—it only plans and delegates. After the swarm finishes, a dedicated **Telegram Summarizer** agent condenses the raw output into a short, plain-text reply suitable for chat (no emojis).
+
+This design keeps the director focused on orchestration and intent, while search, code, token operations, and simple replies are handled by the right worker. You get multi-agent behavior with a clear chain of responsibility and a single, chat-friendly response to the user.
+
+### Hierarchical swarm (Mermaid)
 
 ```mermaid
 flowchart TB
@@ -106,18 +112,22 @@ flowchart TB
     SUM --> REPLY[Reply to user]
 ```
 
-**Director:** Receives the user message, creates a plan, and issues orders (SwarmSpec) to one or more workers. **Workers** execute their tasks (simple response, search, token launch, or code). The **Telegram Summarizer** turns the combined output into a concise, emoji-free reply for the channel.
+- **Director (ClawSwarm):** Receives the user message, creates a plan, and outputs **SwarmSpec** (structured plan + orders) so the swarm runtime can invoke the right workers. No tools; orchestration only.
+- **Workers:** Execute the assigned tasks (response, search, token launch, or code) and contribute to the combined swarm output.
+- **Telegram Summarizer:** Post-processes the swarm output into a concise, emoji-free reply for the channel.
 
 ### Agents
 
 | Agent | Role | Tools / capabilities |
 |-------|------|----------------------|
-| **ClawSwarm** (Director) | Orchestrator; creates a plan and assigns tasks to workers via SwarmSpec. | Plan + orders (structured output for the swarm). |
+| **ClawSwarm** (Director) | Orchestrator; creates a plan and assigns tasks to workers via SwarmSpec. Does not run tools itself. | Plan + orders (structured output for the swarm). |
 | **ClawSwarm-Response** | Simple replies and general questions; greetings, short factual answers, clarifications. | None (LLM only). |
 | **ClawSwarm-Search** | Web and semantic search. | `exa_search` — current events, research, fact-checking. |
 | **ClawSwarm-TokenLaunch** | Launch tokens and claim fees on Swarms World (Solana). | `launch_token`, `claim_fees`. |
 | **ClawSwarm-Developer** | Code, refactor, debug, and implement via Claude Code. | `run_claude_developer` (Read, Write, Edit, Bash, Grep, Glob, etc.). |
 | **ClawSwarm-TelegramSummarizer** | Summarize swarm output for chat; plain text, no emojis. | None (LLM only). |
+
+Worker agents are created in `claw_swarm.agent.worker_agents` (e.g. `create_response_agent()`, `create_search_agent()`, `create_developer_agent()`, `create_token_launch_agent()`) and composed into the swarm in `claw_swarm.agent.main` via `create_agent()`, which returns a `HierarchicalSwarm` ready for `.run(task)`.
 
 ### Relationship to OpenClaw
 

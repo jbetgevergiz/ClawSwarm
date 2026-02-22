@@ -244,6 +244,55 @@ Messages are normalized to a single schema: `UnifiedMessage` (id, platform, chan
 
 ---
 
+## Deployment
+
+### Railway (Recommended)
+
+[Railway](https://railway.app) is the easiest way to deploy ClawSwarm. It handles containers, environment variables, persistent storage, and auto-restarts out of the box — no infrastructure management required.
+
+**Steps:**
+
+1. **Fork or push** this repo to your GitHub account.
+
+2. **Create a new Railway project** at [railway.app](https://railway.app) and connect your GitHub repo.
+
+3. **Add environment variables** in the Railway dashboard under *Variables*. Copy from `.env.example` and fill in your credentials:
+
+   ```
+   TELEGRAM_BOT_TOKEN=...
+   DISCORD_BOT_TOKEN=...
+   DISCORD_CHANNEL_IDS=...
+   OPENAI_API_KEY=...
+   ANTHROPIC_API_KEY=...
+   AGENT_MODEL=gpt-4o-mini
+   ```
+
+4. **Deploy.** Railway auto-detects the `Dockerfile` and builds the image. The service starts with `clawswarm run`.
+
+5. **(Optional) Expose the gRPC port** — In Railway's *Settings → Networking*, expose port `50051` if you need external clients to reach the gateway. For most setups the gateway and agent run in the same process and no public port is needed.
+
+**Tips:**
+- Use Railway's *Volumes* to persist `agent_memory.md` across deploys (mount at `/app/agent_memory.md`).
+- Set `GATEWAY_TLS=1` and add your cert/key files as variables or volume-mounted secrets for production TLS.
+- Railway's free tier is sufficient for light workloads; upgrade to a paid plan for always-on 24/7 operation.
+
+### Docker
+
+Build and run locally or on any host with Docker:
+
+```bash
+docker build -t clawswarm .
+docker run --env-file .env clawswarm
+```
+
+For persistent memory across container restarts, mount a volume:
+
+```bash
+docker run --env-file .env -v $(pwd)/agent_memory.md:/app/agent_memory.md clawswarm
+```
+
+---
+
 ## Security and Operations
 
 - **Secrets** — Do not commit tokens or API keys. Use environment variables or a secrets manager.

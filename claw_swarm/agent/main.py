@@ -1,22 +1,15 @@
 from __future__ import annotations
 
-import os
-
 import re
+import traceback
 
 from swarms import Agent, HierarchicalSwarm
-from swarms.prompts.hiearchical_system_prompt import (
-    HIEARCHICAL_SWARM_SYSTEM_PROMPT,
-)
-import traceback
 from claw_swarm.prompts import (
     CLAUDE_HELPER_DESCRIPTION,
     CLAUDE_HELPER_NAME,
     CLAUDE_TOOL_SYSTEM,
-    CLAWSWARM_AGENT_DESCRIPTION,
-    CLAWSWARM_SYSTEM,
     TELEGRAM_SUMMARY_SYSTEM,
-    build_agent_system_prompt,
+    build_director_system_prompt,
 )
 from claw_swarm.tools import run_claude_agent
 from claw_swarm.agent.worker_agents import (
@@ -25,38 +18,6 @@ from claw_swarm.agent.worker_agents import (
     create_search_agent,
     create_token_launch_agent,
 )
-
-WORKER_AGENTS = [
-    create_response_agent(),
-    create_developer_agent(),
-    create_search_agent(),
-    create_token_launch_agent(),
-]
-
-
-def _build_director_system_prompt(
-    *,
-    agent_name: str = "ClawSwarm",
-    system_prompt: str | None = None,
-) -> str:
-    """
-    Build the director system prompt: ClawSwarm identity and behavior first,
-    then the hierarchical director instructions so the director still outputs
-    plan/orders in the format HierarchicalSwarm.parse_orders expects (SwarmSpec).
-    """
-    base_system = system_prompt or CLAWSWARM_SYSTEM
-    clawswarm_part = build_agent_system_prompt(
-        name=agent_name,
-        description=CLAWSWARM_AGENT_DESCRIPTION,
-        system_prompt=base_system,
-    )
-    return (
-        clawswarm_part
-        + "\n\n---\n\nYou are also the Hierarchical Agent Director. "
-        "You MUST output your plan and orders using the SwarmSpec tool/schema "
-        "so the swarm can execute them. Do not reply with plain text only.\n\n"
-        + HIEARCHICAL_SWARM_SYSTEM_PROMPT
-    )
 
 
 def call_claude(task: str) -> str:
@@ -115,20 +76,22 @@ def create_agent(
         >>> print(reply)
         'Python 3.12 introduces ...'
     """
-    director_system_prompt = _build_director_system_prompt(
+    director_system_prompt = build_director_system_prompt(
         agent_name=agent_name,
         system_prompt=system_prompt,
     )
-    director_model_name = (
-        os.environ.get("AGENT_MODEL", "gpt-4o-mini").strip()
-        or "gpt-4o-mini"
-    )
+    worker_agents = [
+        create_response_agent(),
+        create_developer_agent(),
+        create_search_agent(),
+        create_token_launch_agent(),
+    ]
     return HierarchicalSwarm(
         name=agent_name,
         description="A hierarchical swarm of agents that can handle complex tasks",
-        agents=WORKER_AGENTS,
+        agents=worker_agents,
         director_name=agent_name,
-        director_model_name=director_model_name,
+        director_model_name="gpt-4.1",
         director_system_prompt=director_system_prompt,
         director_feedback_on=False,
     )
@@ -194,11 +157,11 @@ def summarize_for_telegram(swarm_output: str) -> str:
     """
     if not swarm_output or not str(swarm_output).strip():
         return ""
-    
+
     summarizer = _create_telegram_summarizer_agent()
-    
+
     out = summarizer.run(
         f"Summarize the following output for a Telegram message. No emojis.\n\n{swarm_output}"
     )
-    
+
     return out

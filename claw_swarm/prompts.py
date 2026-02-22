@@ -2,6 +2,12 @@
 ClawSwarm prompt strings and helpers. All prompts live here as variables or functions.
 """
 
+from datetime import datetime, timezone
+
+from swarms.prompts.hiearchical_system_prompt import (
+    HIEARCHICAL_SWARM_SYSTEM_PROMPT,
+)
+
 # ---- Main agent ----
 
 CLAWSWARM_SYSTEM = """
@@ -78,14 +84,54 @@ AGENT_NAME_PREFIX = "You are operating as the agent named: {name}."
 AGENT_DESCRIPTION_PREFIX = "Description of your role: {description}."
 
 
+def _current_datetime_section() -> str:
+    """Return a prominent datetime section for injection into system prompts."""
+    now = datetime.now(timezone.utc)
+    formatted = now.strftime("%A, %B %d, %Y at %H:%M:%S UTC")
+    return (
+        "## Current Date & Time\n"
+        f"The current date and time is: {formatted}\n"
+        "This date and time has been injected into your system prompt at startup. "
+        "When a user asks what time or date it is, state this value directly. "
+        "Do NOT say you cannot check the time — you already have it."
+    )
+
+
 def build_agent_system_prompt(
     name: str, description: str, system_prompt: str
 ) -> str:
-    """Combine name, description, and system prompt into one system message for Claude agent runs."""
+    """Combine name, description, current datetime, and system prompt into one system message."""
     parts = [
         AGENT_NAME_PREFIX.format(name=name),
         AGENT_DESCRIPTION_PREFIX.format(description=description),
         "",
+        _current_datetime_section(),
+        "",
         system_prompt.strip(),
     ]
     return "\n".join(parts).strip()
+
+
+def build_director_system_prompt(
+    *,
+    agent_name: str = "ClawSwarm",
+    system_prompt: str | None = None,
+) -> str:
+    """
+    Build the director system prompt: ClawSwarm identity and behavior first,
+    then the hierarchical director instructions so the director still outputs
+    plan/orders in the format HierarchicalSwarm.parse_orders expects (SwarmSpec).
+    """
+    base_system = system_prompt or CLAWSWARM_SYSTEM
+    clawswarm_part = build_agent_system_prompt(
+        name=agent_name,
+        description=CLAWSWARM_AGENT_DESCRIPTION,
+        system_prompt=base_system,
+    )
+    return (
+        clawswarm_part
+        + "\n\n---\n\nYou are also the Hierarchical Agent Director. "
+        "You MUST output your plan and orders using the SwarmSpec tool/schema "
+        "so the swarm can execute them. Do not reply with plain text only.\n\n"
+        + HIEARCHICAL_SWARM_SYSTEM_PROMPT
+    )

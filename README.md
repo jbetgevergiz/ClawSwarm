@@ -122,7 +122,6 @@ ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **n
 
 ## Architecture
 
-### Message flow
 
 ```
      Telegram    Discord    WhatsApp
@@ -145,7 +144,9 @@ ClawSwarm is a streamlined, multi-agent alternative to OpenClaw. It delivers **n
      Telegram    Discord    WhatsApp
 ```
 
-**Flow:** User messages arrive on any channel → Gateway normalizes and exposes via gRPC → Hierarchical Swarm (director + workers) runs → Telegram Summarizer shortens output for chat (no emojis) → Replier sends the response to the correct channel.
+ClawSwarm starts with a gRPC gateway that ingests messages from Telegram, Discord, and WhatsApp, normalizing each into a unified schema. An agent runner polls the gateway on a short cadence, pulling new messages in batches and maintaining its own cursor for reliable delivery without an external broker.
+
+Each message is routed into a hierarchical multi-agent system: a director agent plans and delegates to specialist workers covering simple responses, web search, token operations, and code execution then a summarizer agent condenses the combined output into a clean, concise reply. That reply is delivered back to the originating platform and channel, and the full interaction is saved to a shared memory file so context persists across all channels and restarts. 
 
 ### Hierarchical architecture
 
@@ -240,3 +241,20 @@ Messages are normalized to a single schema: `UnifiedMessage` (id, platform, chan
 ## License
 
 See the repository LICENSE for terms of use.
+
+---
+
+## Citation
+
+If you use ClawSwarm in your research or work, please cite:
+
+```bibtex
+@software{gomez2025clawswarm,
+  author       = {Gomez, Kye and {The Swarms Corporation}},
+  title        = {ClawSwarm: A Team of 10,000 Productivity Agents for You},
+  year         = {2025},
+  publisher    = {The Swarms Corporation},
+  url          = {https://github.com/kyegomez/ClawSwarm},
+  note         = {A lightweight, natively multi-agent alternative to OpenClaw, supporting Telegram, Discord, and WhatsApp via a unified gRPC gateway}
+}
+```

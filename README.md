@@ -215,6 +215,20 @@ flowchart LR
 
 [OpenClaw](https://github.com/openclaw/openclaw) is a full-featured personal AI assistant (gateway, many channels, voice, canvas, nodes, skills). **ClawSwarm** is a smaller, lighter-weight take on that vision: natively multi-agent, built on the Swarms framework and Swarms ecosystem, with a path to compile to Rust. Use ClawSwarm when you want a lean, multi-agent messaging layer; use OpenClaw when you need the full product (companion apps, voice, canvas, etc.).
 
+| Feature | ClawSwarm | OpenClaw |
+|---------|-----------|----------|
+| **Transport** | gRPC over HTTP/2, Protobuf, optional TLS | WebSockets |
+| **Multi-agent** | Native — hierarchical director + workers | Single agent |
+| **Customizable agents** | Add workers with any tools, model, and role | Not natively extensible |
+| **Skills compatibility** | Backwards compatible with all Swarms skills | Custom skill format |
+| **Agent memory** | Persistent markdown memory + RAG for long history | Session-scoped |
+| **Swarm memory** | Shared across all channels and restarts | Not shared |
+| **Channels** | Telegram, Discord, WhatsApp | Telegram, Discord, WhatsApp, and more |
+| **Voice / Canvas / Nodes** | Not included | Full product |
+| **Compile to Rust** | Path included | No |
+| **Footprint** | Lean, minimal dependencies | Full-featured, larger surface area |
+| **Best for** | Multi-agent messaging layer, extensible bots | Full personal AI assistant product |
+
 
 ---
 

@@ -10,6 +10,7 @@ __pycache__/
 .DS_Store
 .env
 agent_memory.md
+.claude 
 agent_workspace/
 .Python
 build/

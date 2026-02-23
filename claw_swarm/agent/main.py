@@ -146,7 +146,8 @@ def _create_telegram_summarizer_agent() -> Agent:
 def summarize_for_telegram(swarm_output: str) -> str:
     """
     Take the raw output from the hierarchical swarm and return a concise
-    summary suitable for Telegram, with no emojis.
+    summary suitable for Telegram, with no emojis. Truncate to 4000 chars
+    to respect Telegram's message limit.
 
     Args:
         swarm_output: Raw string output from the swarm (may be long or
@@ -154,8 +155,8 @@ def summarize_for_telegram(swarm_output: str) -> str:
             pass str(swarm_output).
 
     Returns:
-        Summarized text for Telegram, with emojis stripped. Returns the
-        original string (with emojis stripped) if summarization fails.
+        Summarized text for Telegram, with emojis stripped and truncated.
+        Returns the original string (with emojis stripped) if summarization fails.
     """
     if not swarm_output or not str(swarm_output).strip():
         return ""
@@ -163,7 +164,12 @@ def summarize_for_telegram(swarm_output: str) -> str:
     summarizer = _create_telegram_summarizer_agent()
 
     out = summarizer.run(
-        f"Summarize the following output for a Telegram message. No emojis.\n\n{swarm_output}"
+        f"Summarize the following output for a Telegram message. Be VERY concise (max 100 words). No emojis.\n\n{swarm_output}"
     )
+
+    # Truncate to Telegram's 4096 char limit (leave 100 chars buffer)
+    max_length = 3900
+    if len(out) > max_length:
+        out = out[:max_length].rsplit('\n', 1)[0] + "\n\n[Output truncated - too long for Telegram]"
 
     return out

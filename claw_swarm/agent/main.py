@@ -138,6 +138,8 @@ def _create_telegram_summarizer_agent() -> Agent:
         system_prompt=TELEGRAM_SUMMARY_SYSTEM,
         model_name="claude-opus-4-1",
         max_loops=1,
+        temperature=0.7,
+        top_p=None,
     )
 
 

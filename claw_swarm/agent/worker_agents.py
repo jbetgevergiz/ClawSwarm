@@ -42,6 +42,8 @@ from claw_swarm.tools.launch_tokens import claim_fees, launch_token
 
 from swarms_tools import exa_search
 
+from claw_swarm.tools.file_executor import safe_write_file, safe_run_command
+
 
 # =============================================================================
 # Prompts and agent metadata (all at top)
@@ -377,7 +379,10 @@ def create_developer_agent(
         agent_description=DEVELOPER_AGENT_DESCRIPTION,
         system_prompt=full_system,
         model_name=model,
-        tools=[_run_claude_developer],
+        tools=[_run_claude_developer, 
+               safe_write_file, 
+               safe_run_command, 
+               deploy_to_vercel]
         max_loops=5,
         output_type="final",
         temperature=0.7,

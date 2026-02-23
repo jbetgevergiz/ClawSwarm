@@ -241,9 +241,9 @@ def create_response_agent(
         model_name=model,
         max_loops=1,
         output_type="final",
+        temperature=0.7,
+        top_p=None,
     )
-
-
 # ---- Search worker ----
 
 
@@ -287,9 +287,9 @@ def create_search_agent(
         tools=[exa_search],
         max_loops=1,
         output_type="final",
+        temperature=0.7,
+        top_p=None,
     )
-
-
 # ---- Token launch worker ----
 
 
@@ -333,9 +333,9 @@ def create_token_launch_agent(
         tools=[launch_token, claim_fees],
         max_loops=1,
         output_type="final",
+        temperature=0.7,
+        top_p=None,
     )
-
-
 # ---- Developer worker ----
 
 
@@ -380,4 +380,6 @@ def create_developer_agent(
         tools=[_run_claude_developer],
         max_loops=5,
         output_type="final",
+        temperature=0.7,
+        top_p=None,
     )

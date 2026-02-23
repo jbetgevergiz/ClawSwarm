@@ -91,7 +91,7 @@ def create_agent(
         description="A hierarchical swarm of agents that can handle complex tasks",
         agents=worker_agents,
         director_name=agent_name,
-        director_model_name="gpt-4.1",
+        director_model_name="claude-opus-4-1",
         director_system_prompt=director_system_prompt,
         director_feedback_on=False,
     )
@@ -136,7 +136,7 @@ def _create_telegram_summarizer_agent() -> Agent:
         agent_name="ClawSwarm-TelegramSummarizer",
         agent_description="Summarizes swarm output for Telegram chat; no emojis.",
         system_prompt=TELEGRAM_SUMMARY_SYSTEM,
-        model_name="gpt-4.1",
+        model_name="claude-opus-4-1",
         max_loops=1,
     )
 
